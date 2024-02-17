@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'message_item.dart';
-import 'chat_item.dart';
 
 class ChatMessage {
   final String text;
@@ -18,18 +18,23 @@ class ChatPage extends StatefulWidget {
   final String userName;
   final IconData iconData;
   final Color iconColor;
+  final Function(String, String) updateLastMessage;
+  final Function(String, String) updateLastMessageTime;
 
-  ChatPage(
-      {required this.userName,
-      required this.iconData,
-      required this.iconColor});
+  ChatPage({
+    required this.userName,
+    required this.iconData,
+    required this.iconColor,
+    required this.updateLastMessage,
+    required this.updateLastMessageTime,
+  });
+
   @override
   _ChatPageState createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> {
   TextEditingController _messageController = TextEditingController();
-  List<ChatMessage> _messages = [];
 
   @override
   Widget build(BuildContext context) {
@@ -71,17 +76,33 @@ class _ChatPageState extends State<ChatPage> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              reverse: true,
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                return MessageItem(
-                  type: _messages[index].sent
-                      ? MessageType.MyMessage
-                      : MessageType.OthersMessage,
-                  message: _messages[index].text,
-                  timestamp: _messages[index].timestamp,
-                  sent: _messages[index].sent,
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('messages')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return Text('Ошибка: ${snapshot.error}');
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                final messages = snapshot.data!.docs;
+                return ListView.builder(
+                  reverse: true,
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    return MessageItem(
+                      type: MessageType.MyMessage,
+                      message: message['text'],
+                      timestamp: message['timestamp'].toDate(),
+                      sent: message['sent'],
+                    );
+                  },
                 );
               },
             ),
@@ -101,7 +122,7 @@ class _ChatPageState extends State<ChatPage> {
                   child: IconButton(
                     icon: Icon(Icons.attach_file, color: Colors.black),
                     onPressed: () {
-                      // Handle file attachment
+                      // Обработка вложений файлов
                     },
                   ),
                 ),
@@ -116,13 +137,12 @@ class _ChatPageState extends State<ChatPage> {
                     child: TextField(
                       controller: _messageController,
                       decoration: InputDecoration(
+                        contentPadding: EdgeInsets.only(left: 10, bottom: 10),
                         hintText: 'Сообщение',
                         hintStyle: TextStyle(color: Color(0xFF9DB7CB)),
                         border: InputBorder.none,
                       ),
-                      onSubmitted: (text) {
-                        _sendMessage(text);
-                      },
+                      onSubmitted: _sendMessage,
                     ),
                   ),
                 ),
@@ -151,17 +171,15 @@ class _ChatPageState extends State<ChatPage> {
 
   void _sendMessage(String text) {
     if (text.isNotEmpty) {
-      setState(() {
-        _messages.insert(
-          0,
-          ChatMessage(
-            text: text,
-            timestamp: DateTime.now(),
-            sent: true,
-          ),
-        );
-        _messageController.clear();
+      FirebaseFirestore.instance.collection('messages').add({
+        'text': text,
+        'timestamp': DateTime.now(),
+        'sent': true,
       });
+
+      widget.updateLastMessage(widget.userName, text);
+      widget.updateLastMessageTime(widget.userName, DateTime.now().toString());
+      _messageController.clear();
     }
   }
 

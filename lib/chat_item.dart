@@ -3,6 +3,9 @@ import 'dart:math';
 
 class ChatItem extends StatelessWidget {
   final String userName;
+  final String lastMessage;
+  final String lastMessageTime;
+
   final List<Color> _colorList = [
     Colors.blue,
     Colors.red,
@@ -18,6 +21,8 @@ class ChatItem extends StatelessWidget {
   ChatItem({
     Key? key,
     required this.userName,
+    required this.lastMessage,
+    required this.lastMessageTime,
   }) : super(key: key);
 
   @override
@@ -63,7 +68,7 @@ class ChatItem extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Последнее сообщение',
+                  lastMessage,
                   style: TextStyle(color: Color(0xFF5E7A90)),
                 ),
               ],
@@ -73,7 +78,7 @@ class ChatItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Дата',
+                  lastMessageTime,
                   style: TextStyle(color: Color(0xFF5E7A90)),
                 ),
               ],

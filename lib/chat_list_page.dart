@@ -10,10 +10,28 @@ class ChatListPage extends StatefulWidget {
 class _ChatListPageState extends State<ChatListPage> {
   List<String> _users = [
     'Виктор Власов',
-    'Саша Алексеев',
-    'Петр Жаринов',
-    'Алина Жукова'
   ];
+
+  //ДЛЯ ОТОБРАЖЕНИЯ ПОСЛЕДНЕГО СООБЩЕНИЯ
+  Map<String, String> _lastMessages = {
+    'Виктор Власов': '',
+  };
+  void updateLastMessage(String userName, String message) {
+    setState(() {
+      _lastMessages[userName] = message;
+    });
+  }
+
+//ДЛЯ ОТОБРАЖЕНИЯ ВРЕМЕНИ ПОСЛЕДНЕГО СООБЩЕНИЯ
+  Map<String, String> _lastMessagesTime = {
+    'Виктор Власов': '',
+  };
+  void updateLastMessageTime(String userName, String time) {
+    setState(() {
+      _lastMessagesTime[userName] = time;
+    });
+  }
+
   List<String> _filteredUsers = [];
 
   @override
@@ -71,6 +89,8 @@ class _ChatListPageState extends State<ChatListPage> {
             child: ListView.builder(
               itemCount: _filteredUsers.length,
               itemBuilder: (context, index) {
+                final userName = _filteredUsers[index];
+                final lastMessage = _lastMessages[userName] ?? '';
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -80,11 +100,18 @@ class _ChatListPageState extends State<ChatListPage> {
                           userName: _filteredUsers[index],
                           iconData: Icons.account_circle,
                           iconColor: Colors.blue,
+                          updateLastMessage: updateLastMessage,
+                          updateLastMessageTime: updateLastMessageTime,
                         ),
                       ),
                     );
                   },
-                  child: ChatItem(userName: _filteredUsers[index]),
+                  child: ChatItem(
+                    userName: _filteredUsers[index],
+                    lastMessage: lastMessage,
+                    lastMessageTime: _formatTime(
+                        _lastMessagesTime[_filteredUsers[index]] ?? ''),
+                  ),
                 );
               },
             ),
@@ -93,4 +120,17 @@ class _ChatListPageState extends State<ChatListPage> {
       ),
     );
   }
+}
+
+//ФОРМАТ ВРЕМЕНИ НА ЧАСЫ И МИНУТЫ
+String _formatTime(String? time) {
+  if (time == null || time.isEmpty) {
+    return '';
+  }
+
+  final dateTime = DateTime.parse(time);
+  final hour = dateTime.hour.toString().padLeft(2, '0');
+  final minute = dateTime.minute.toString().padLeft(2, '0');
+
+  return '$hour:$minute';
 }
