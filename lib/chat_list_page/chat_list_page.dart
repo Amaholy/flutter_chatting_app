@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'chat_page.dart';
+import '../chat_page/chat_page.dart';
 import 'chat_item.dart';
+import '../users/users.dart';
 
 class ChatListPage extends StatefulWidget {
   @override
@@ -8,9 +9,7 @@ class ChatListPage extends StatefulWidget {
 }
 
 class _ChatListPageState extends State<ChatListPage> {
-  List<String> _users = [
-    'Виктор Власов',
-  ];
+  List<String> _users = usersList;
 
   //ДЛЯ ОТОБРАЖЕНИЯ ПОСЛЕДНЕГО СООБЩЕНИЯ
   Map<String, String> _lastMessages = {
@@ -46,6 +45,58 @@ class _ChatListPageState extends State<ChatListPage> {
           .where((user) => user.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
+  }
+
+//ТУТ ДОБАВИЛ floatingActionButton для нового пользователя
+  void _addNewUser(BuildContext context) {
+    TextEditingController _nameController = TextEditingController();
+    TextEditingController _surnameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Добавить нового пользователя'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(labelText: 'Имя'),
+              ),
+              TextField(
+                controller: _surnameController,
+                decoration: InputDecoration(labelText: 'Фамилия'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Отмена'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                String name = _nameController.text;
+                String surname = _surnameController.text;
+                String fullName = '$name $surname';
+
+                setState(() {
+                  _users.add(fullName);
+                  _filteredUsers = _users
+                      .toList(); // Обновляем список отфильтрованных пользователей
+                });
+
+                Navigator.pop(context); // Закрываем диалоговое окно
+              },
+              child: Text('Добавить'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -117,6 +168,12 @@ class _ChatListPageState extends State<ChatListPage> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _addNewUser(context);
+        },
+        child: Icon(Icons.add),
       ),
     );
   }

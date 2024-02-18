@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'chat_app.dart';
+import 'chat_list_page/chat_app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
